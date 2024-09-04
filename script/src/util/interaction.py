@@ -2,6 +2,7 @@ import time
 import streamlit as st
 from datetime import datetime
 from dao import mysql_connect as bd
+from dao import mongo_connect as mongo_db
 from model import interaction_entity
 
 # Função para registrar interações
@@ -24,7 +25,7 @@ def log_interaction(user_question, bot_response):
         bot_response=bot_response
     )
 
-    bd.insert_bd(new_interaction)
+    mongo_db.insert_bd(new_interaction)
 
     
 
