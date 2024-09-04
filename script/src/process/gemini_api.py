@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
-import dao.mysql_connect as mysql
+import dao.mongo_connect as mongo_db
 
 load_dotenv()
 
