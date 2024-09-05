@@ -25,12 +25,16 @@ def insert_bd(new_interaction):
     print("| SHOW DADOS DO USUARIO: ", dados)
     print()
     print("| SHOW DA COLLECTION RETORNADO: ", collection)
+    print()
+    print("| SHOW TIMESTAMP: ", new_interaction.timestamp)
+    print()
     
-    collection.insert_one(dados)
+    # collection.insert_one(dados)
+    get_all()
 
 def get_all():
     # Exemplo de consulta
-
+    print("| FIND ALL DADOS NO BANCO MONGO DB ATLAS... |")
     collection = connected_bd()
 
     resultado = collection.find()
