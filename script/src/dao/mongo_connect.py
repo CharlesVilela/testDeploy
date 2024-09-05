@@ -2,7 +2,8 @@ from pymongo import MongoClient
 
 def connected_bd():
     # Substitua com sua URL de conexão MongoDB
-    client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+    # client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+    client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&ssl=true&ssl_cert_reqs=CERT_NONE")
 
     # Escolha o banco de dados
     db = client["chatbot_chronoschat"]
