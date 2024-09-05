@@ -1,23 +1,17 @@
-from pymongo import MongoClient, encryption
+from pymongo import MongoClient, errors
+import streamlit as st
 
 def connected_bd():
-    # Substitua com sua URL de conexão MongoDB
-    client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-    # client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&ssl=true&ssl_cert_reqs=CERT_NONE")
-    # client = MongoClient(
-    #     "mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/",
-    #     ssl_cert_reqs=encryption.server_api.SSL_CERT_REQUIRED
-    # )
+    try:
+        client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+        db = client["chatbot_chronoschat"]
+        collection = db["chatbot"]
+        return collection
+    except errors.ServerSelectionTimeoutError as e:
+        st.error(f"Erro ao conectar ao MongoDB: {e}")
+        return None
 
-    print("| SHOW CONNECTED BD |: ", client)
 
-    # Escolha o banco de dados
-    db = client["chatbot_chronoschat"]
-
-    # Escolha a coleção
-    collection = db["chatbot"]
-
-    return collection
 
 def insert_bd(new_interaction):
     # Exemplo de inserção de dados
@@ -27,6 +21,10 @@ def insert_bd(new_interaction):
              "botresponse": new_interaction.bot_response, 
              "userid": new_interaction.user_id, 
              "timeresponse": new_interaction.timestamp}
+    
+    print("| SHOW DADOS DO USUARIO: ", dados)
+    print()
+    print("| SHOW DA COLLECTION RETORNADO: ", collection)
     
     collection.insert_one(dados)
 
