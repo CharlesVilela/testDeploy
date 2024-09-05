@@ -2,12 +2,14 @@ from pymongo import MongoClient, encryption
 
 def connected_bd():
     # Substitua com sua URL de conexão MongoDB
-    # client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+    client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
     # client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&ssl=true&ssl_cert_reqs=CERT_NONE")
-    client = MongoClient(
-        "mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/",
-        ssl_cert_reqs=encryption.server_api.SSL_CERT_REQUIRED
-    )
+    # client = MongoClient(
+    #     "mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/",
+    #     ssl_cert_reqs=encryption.server_api.SSL_CERT_REQUIRED
+    # )
+
+    print("| SHOW CONNECTED BD |: ", client)
 
     # Escolha o banco de dados
     db = client["chatbot_chronoschat"]
