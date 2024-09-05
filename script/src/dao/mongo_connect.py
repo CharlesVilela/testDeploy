@@ -29,7 +29,7 @@ def insert_bd(new_interaction):
     print("| SHOW TIMESTAMP: ", new_interaction.timestamp)
     print()
     
-    # collection.insert_one(dados)
+    collection.insert_one(dados)
     get_all()
 
 def get_all():
