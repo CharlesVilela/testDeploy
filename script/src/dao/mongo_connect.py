@@ -38,4 +38,6 @@ def get_all():
     collection = connected_bd()
 
     resultado = collection.find()
-    print(resultado)
+    # Exibindo os dados
+    for dado in resultado:
+        print(dado)
