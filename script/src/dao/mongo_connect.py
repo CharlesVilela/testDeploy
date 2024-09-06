@@ -14,23 +14,26 @@ def connected_bd():
 
 
 def insert_bd(new_interaction):
-    # Exemplo de inserção de dados
-
     collection = connected_bd()
+
+    if collection is None:
+        st.error("Não foi possível conectar ao banco de dados.")
+        return
+
     dados = {"userquestion": new_interaction.user_question, 
              "botresponse": new_interaction.bot_response, 
              "userid": new_interaction.user_id, 
              "timeresponse": new_interaction.timestamp}
     
-    print("| SHOW DADOS DO USUARIO: ", dados)
-    print()
-    print("| SHOW DA COLLECTION RETORNADO: ", collection)
-    print()
-    print("| SHOW TIMESTAMP: ", new_interaction.timestamp)
-    print()
-    
-    collection.insert_one(dados)
-    get_all()
+    try:
+        result = collection.insert_one(dados)
+        st.success("Dados inseridos com sucesso!")
+    except errors.ServerSelectionTimeoutError as e:
+        st.error(f"Erro de timeout na seleção do servidor: {e}")
+    except errors.ConnectionFailure as e:
+        st.error(f"Erro de conexão com o MongoDB: {e}")
+    except Exception as e:
+        st.error(f"Erro inesperado ao inserir dados: {e}")
 
 def get_all():
     # Exemplo de consulta
