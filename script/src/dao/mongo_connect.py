@@ -14,7 +14,7 @@ def connected_bd2():
 def connected_bd():
     uri = "mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
     # Create a new client and connect to the server
-    client = MongoClient(uri, server_api=server_api.ServerApi('1'))
+    client = MongoClient(uri, server_api=server_api.ServerApi('1'), connectTimeoutMS=60000)
     # Send a ping to confirm a successful connection
     try:
         client.admin.command('ping')
@@ -39,18 +39,16 @@ def insert_bd(new_interaction):
              "botresponse": new_interaction.bot_response, 
              "userid": new_interaction.user_id, 
              "timeresponse": new_interaction.timestamp}
-    
-    get_all()
 
-    # try:
-    #     result = collection.insert_one(dados)
-    #     st.success("Dados inseridos com sucesso!")
-    # except errors.ServerSelectionTimeoutError as e:
-    #     st.error(f"Erro de timeout na seleção do servidor: {e}")
-    # except errors.ConnectionFailure as e:
-    #     st.error(f"Erro de conexão com o MongoDB: {e}")
-    # except Exception as e:
-    #     st.error(f"Erro inesperado ao inserir dados: {e}")
+    try:
+        result = collection.insert_one(dados)
+        st.success("Dados inseridos com sucesso!")
+    except errors.ServerSelectionTimeoutError as e:
+        st.error(f"Erro de timeout na seleção do servidor: {e}")
+    except errors.ConnectionFailure as e:
+        st.error(f"Erro de conexão com o MongoDB: {e}")
+    except Exception as e:
+        st.error(f"Erro inesperado ao inserir dados: {e}")
 
 def get_all():
     # Exemplo de consulta
