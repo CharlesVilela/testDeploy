@@ -1,7 +1,7 @@
-from pymongo import MongoClient, errors
+from pymongo import MongoClient, errors, server_api
 import streamlit as st
 
-def connected_bd():
+def connected_bd2():
     try:
         client = MongoClient("mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
         db = client["chatbot_chronoschat"]
@@ -10,6 +10,21 @@ def connected_bd():
     except errors.ServerSelectionTimeoutError as e:
         st.error(f"Erro ao conectar ao MongoDB: {e}")
         return None
+
+def connected_bd():
+    uri = "mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+    # Create a new client and connect to the server
+    client = MongoClient(uri, server_api=server_api.ServerApi('1'))
+    # Send a ping to confirm a successful connection
+    try:
+        client.admin.command('ping')
+        print("Pinged your deployment. You successfully connected to MongoDB!")
+    except Exception as e:
+        print(e)
+    
+    db = client["chatbot_chronoschat"]
+    collection = db["chatbot"]
+    return collection
 
 
 
