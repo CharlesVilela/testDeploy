@@ -40,15 +40,17 @@ def insert_bd(new_interaction):
              "userid": new_interaction.user_id, 
              "timeresponse": new_interaction.timestamp}
     
-    try:
-        result = collection.insert_one(dados)
-        st.success("Dados inseridos com sucesso!")
-    except errors.ServerSelectionTimeoutError as e:
-        st.error(f"Erro de timeout na seleção do servidor: {e}")
-    except errors.ConnectionFailure as e:
-        st.error(f"Erro de conexão com o MongoDB: {e}")
-    except Exception as e:
-        st.error(f"Erro inesperado ao inserir dados: {e}")
+    get_all()
+
+    # try:
+    #     result = collection.insert_one(dados)
+    #     st.success("Dados inseridos com sucesso!")
+    # except errors.ServerSelectionTimeoutError as e:
+    #     st.error(f"Erro de timeout na seleção do servidor: {e}")
+    # except errors.ConnectionFailure as e:
+    #     st.error(f"Erro de conexão com o MongoDB: {e}")
+    # except Exception as e:
+    #     st.error(f"Erro inesperado ao inserir dados: {e}")
 
 def get_all():
     # Exemplo de consulta
@@ -56,6 +58,8 @@ def get_all():
     collection = connected_bd()
 
     resultado = collection.find()
+
+    st.markdown(resultado)
     # Exibindo os dados
     for dado in resultado:
         print(dado)
