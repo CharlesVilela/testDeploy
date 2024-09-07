@@ -114,11 +114,11 @@ def main():
             st.write("Reply:")
             st.markdown(f'<div style="width: 100%; margin-top: 10px; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">{st.session_state.chatbot_response} 😊</div>', unsafe_allow_html=True)
     
-    # # Capturar o tempo final ao encerrar a sessão
-    # if st.button("Finalizar Sessão"):
-    #     session_duration = time.time() - st.session_state['start_time']
-    #     # database.log_session(st.session_state.user_id, session_duration)
-    #     st.success(f"Sessão finalizada. Duração: {session_duration:.2f} segundos")
+    messages = st.container(height=300)
+    if prompt := st.chat_input("Say something"):
+        messages.chat_message("user").write(prompt)
+        messages.chat_message("assistant").write(f"Echo: {prompt}")
+        
 
 if __name__ == '__main__':
     main()
