@@ -7,118 +7,75 @@ import threading
 import audio.process_audio as pa
 import process.gemini_api as api
 from util import interaction
+from collections import deque
+
+# def main():
+#     st.set_page_config(page_title='Pergunte para mim...', page_icon=':books:')
+#     st.header("ChronoChat")
+
+#     # Inicializar a lista de mensagens se ainda não existir
+#     if 'chatbot_responses' not in st.session_state:
+#         st.session_state.chatbot_responses = []
+
+#     messages = st.container(height=450)
+#     if prompt := st.chat_input("Say something"):
+#         messages.chat_message("user").write(prompt)
+#         # st.session_state.chatbot_responses.append(prompt)
+#         with st.spinner("Gerando resposta..."):
+#             # user_input = st.session_state.user_input
+#             response = api.send_input_gemini_api(prompt)
+#             # messages.chat_message("assistant").write(f"Echo: {response}")    
+
+#             st.session_state.chatbot_responses.append(response)
+#             # Loop para exibir todas as respostas acumuladas
+#             for msg in st.session_state.chatbot_responses:
+#                 messages.chat_message("assistant").write(f"Chatbot: {msg}")
 
 def main():
     st.set_page_config(page_title='Pergunte para mim...', page_icon=':books:')
     st.header("ChronoChat")
 
-    # Adicionando estilo CSS para ajustar a altura dos botões
-    st.markdown("""
-        <style>
-        .stButton > button {
-            height: 50px;
-            margin-top: 63px;
-            width: 100%;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-    
+    # Inicializar a fila de mensagens se ainda não existir
+    if 'chatbot_responses' not in st.session_state:
+        st.session_state.chatbot_responses = deque()  # Usar deque como fila
     if 'user_id' not in st.session_state:
         st.session_state['user_id'] = str(uuid.uuid4())
         st.session_state['start_time'] = time.time()
     # Rastrear interações
     if 'interactions' not in st.session_state:
         st.session_state['interactions'] = []
-    # Inicializar estados
-    if "is_recording" not in st.session_state:
-        st.session_state.is_recording = {"status": False}
-    if "frames" not in st.session_state:
-        st.session_state.frames = []
-    if "audio_thread" not in st.session_state:
-        st.session_state.audio_thread = None
-    if "recognized_text" not in st.session_state:
-        st.session_state.recognized_text = ""
-    if "conversation_history" not in st.session_state:
-        st.session_state.conversation_history = []
-    if "user_input" not in st.session_state:
-        st.session_state.user_input = ""
-    if "chatbot_response" not in st.session_state:
-        st.session_state.chatbot_response = ""
-    if "isconverter_texto_audio" not in st.session_state:
-        st.session_state.isconverter_texto_audio = False
 
-    # Criar colunas para organizar o layout
-    col1, col2 = st.columns([1, 1])
 
-    with col1:
-        # Botão para converter resposta em áudio
-        st.session_state.isconverter_texto_audio = st.checkbox("Converter Resposta em Áudio", value=st.session_state.isconverter_texto_audio)
+    messages = st.container()
 
-        user_input = st.text_input("Ask a Question from the PDF Files", value=st.session_state.user_input)
-        # Exibir texto reconhecido, se disponível
-        if st.session_state.recognized_text:
-            st.text_area("Texto Reconhecido", st.session_state.recognized_text, height=150)
-        
-        # Atualizar o estado com a pergunta do usuário
-        if user_input != st.session_state.user_input:
-            st.session_state.user_input = user_input
-
-    with col2:
-        col2_1, col2_2 = st.columns(2)
-        with col2_1:
-            if st.button("Iniciar Gravação"):
-                if not st.session_state.is_recording["status"]:
-                    st.session_state.is_recording = {"status": True}
-                    st.session_state.frames = []
-                    st.session_state.audio_thread = threading.Thread(target=pa.record_audio, args=(st.session_state.frames, st.session_state.is_recording))
-                    st.session_state.audio_thread.start()
-                    st.warning("Gravando áudio...")
-
-        with col2_2:
-            if st.button("Parar Gravação"):
-                with st.spinner("Gerando resposta..."):
-                    if st.session_state.is_recording["status"]:
-                        st.session_state.is_recording["status"] = False
-                        st.session_state.audio_thread.join()
-                        pa.save_audio(st.session_state.frames, "audio.wav")
-                        st.success("Áudio gravado e salvo como audio.wav")
-
-                        # Converter áudio em texto
-                        text = pa.audio_to_text("audio.wav")
-                        # st.session_state.recognized_text = text
-
-                        # Atualizar pergunta do usuário com o texto reconhecido
-                        if text:
-                            st.session_state.user_input = text
-
-    # Processar a pergunta do usuário e gerar resposta
-    if st.session_state.user_input:
-        if st.session_state.user_input != "":
-            with st.spinner("Gerando resposta..."):
-                user_input = st.session_state.user_input
-                response = api.send_input_gemini_api(user_input)
-                st.session_state.chatbot_response = response.text
-
-                interaction.log_interaction(user_input, response.text)
-
-            # Limpar a pergunta do usuário após obter a resposta
-            st.session_state.user_input = ""
-
-    # Exibir a resposta do chatbot
-    if st.session_state.chatbot_response:
-        if st.session_state.isconverter_texto_audio:
-            cleaned_response = re.sub(r'[^\w\s]', '', st.session_state.chatbot_response)
-            audio_file = pa.text_to_audio(cleaned_response)
-            st.audio(audio_file, format='audio/mp3')
-        else:
-            st.write("Reply:")
-            st.markdown(f'<div style="width: 100%; margin-top: 10px; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">{st.session_state.chatbot_response} 😊</div>', unsafe_allow_html=True)
-    
-    messages = st.container(height=300)
+    # Entrada do usuário
     if prompt := st.chat_input("Say something"):
-        messages.chat_message("user").write(prompt)
-        messages.chat_message("assistant").write(f"Echo: {prompt}")
-        
+        # Adicionar a pergunta do usuário à fila e exibir na tela
+        # messages.chat_message("user").write(prompt)
+        st.session_state.chatbot_responses.append(("user", prompt))
+
+        with st.spinner("Gerando resposta..."):
+            # Gerar a resposta do chatbot (substitua pela sua chamada real de API)
+            response = api.send_input_gemini_api(prompt)
+            st.session_state.chatbot_responses.append(("assistant", response))
+            interaction.log_interaction(prompt, response)
+    
+        # Exibir todas as interações na tela, em ordem
+        for message in st.session_state.chatbot_responses:
+            # Verifique se cada item é uma tupla com dois elementos
+            if isinstance(message, tuple) and len(message) == 2:
+                role, msg = message
+                if role == "user":
+                    messages.chat_message("user").write(msg)
+                elif role == "assistant":
+                    messages.chat_message("assistant").write(msg)
+            else:
+                st.warning("Formato de mensagem inválido na fila.")
+    
+
+    # on = st.toggle("Activate feature")
+
+
 
 if __name__ == '__main__':
     main()
