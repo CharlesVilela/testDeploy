@@ -1,35 +1,32 @@
 from pymongo import MongoClient, errors, server_api
 import streamlit as st
+from datetime import datetime
 
 def connected_bd():
     uri = "mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
     # Create a new client and connect to the server
     client = MongoClient(uri, server_api=server_api.ServerApi('1'), connectTimeoutMS=60000)
-    # Send a ping to confirm a successful connection
     try:
         client.admin.command('ping')
-        print("Pinged your deployment. You successfully connected to MongoDB!")
     except Exception as e:
         print(e)
-    
     return client["chatbot_chronoschat"]
 
 
 def insert_bd(new_interaction):
     db = connected_bd()
     collection = db["chatbot"]
-
     if collection is None:
         st.error("Não foi possível conectar ao banco de dados.")
         return
-
-    dados = {"userquestion": new_interaction.user_question, 
+    
+    data = {"userquestion": new_interaction.user_question, 
              "botresponse": new_interaction.bot_response, 
              "userid": new_interaction.user_id, 
-             "timeresponse": new_interaction.timestamp}
-
+             "timeresponse": new_interaction.timestamp,
+             "datetime": datetime.now()}
     try:
-        result = collection.insert_one(dados)
+        result = collection.insert_one(data)
     except errors.ServerSelectionTimeoutError as e:
         st.error(f"Erro de timeout na seleção do servidor: {e}")
     except errors.ConnectionFailure as e:
@@ -54,6 +51,21 @@ def get_all():
             "parts": [user_input]
         })
     return history
+
+# def get_previous_questions():
+#     db = connected_bd()
+#     collection = db["chatbot"]
+#     return [doc['userquestion'] for doc in collection.find({}, {"userquestion": 1, "_id": 0})]
+
+def get_previous_questions():
+    db = connected_bd()
+    collection = db["chatbot"]
+    
+    # Buscar tanto as perguntas quanto as respostas
+    results = collection.find({}, {"userquestion": 1, "botresponse": 1, "_id": 0})
+    
+    # Retornar uma lista de dicionários com 'userquestion' e 'botresponse'
+    return [{"question": doc['userquestion'], "response": doc['botresponse']} for doc in results]
 
 def insert_history(history):
     db = connected_bd()
