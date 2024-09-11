@@ -13,7 +13,7 @@ from process import question_similarity_and_message_analysis
 
 
 def main():
-    st.set_page_config(page_title='Pergunte para mim...', page_icon=':books:')
+    st.set_page_config(page_title='ChronosChat', page_icon=':assistant:')
     st.header("ChronoChat")
 
     # Inicializar a fila de mensagens se ainda não existir
