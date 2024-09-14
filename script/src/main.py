@@ -16,6 +16,9 @@ def main():
     st.set_page_config(page_title='ChronosChat', page_icon=':assistant:')
     st.header("ChronoChat")
 
+    isPrimary_question = True
+    messages = st.container()
+
     # Inicializar a fila de mensagens se ainda não existir
     if 'chatbot_responses' not in st.session_state:
         st.session_state.chatbot_responses = deque()  # Usar deque como fila
@@ -26,12 +29,20 @@ def main():
     if 'interactions' not in st.session_state:
         st.session_state['interactions'] = []
 
+    
+    if isPrimary_question:
+        messages.chat_message("assistant").write("Olá no que posso te ajudar hoje?")
+    
 
-    messages = st.container()
+    with st.sidebar:
+        on = st.toggle("Activate feature")
+
+        print(on)
+
     # Entrada do usuário
     if prompt := st.chat_input("Say something"):
-        # Adicionar a pergunta do usuário à fila e exibir na tela
-        # messages.chat_message("user").write(prompt)
+        isPrimary_question = False
+         # Adicionar a pergunta do usuário à fila e exibir na tela
         st.session_state.chatbot_responses.append(("user", prompt))
         with st.spinner("Gerando resposta..."):
             # Gerar a resposta do chatbot (substitua pela sua chamada real de API)
@@ -49,23 +60,19 @@ def main():
                 response = api.send_input_gemini_api(prompt)
                 st.session_state.chatbot_responses.append(("assistant", response))
                 interaction.log_interaction(prompt, response)
-    
-        # Exibir todas as interações na tela, em ordem
+        
+         # Exibir todas as interações na tela, em ordem
         for message in st.session_state.chatbot_responses:
             # Verifique se cada item é uma tupla com dois elementos
             if isinstance(message, tuple) and len(message) == 2:
                 role, msg = message
                 if role == "user":
-                    messages.chat_message("user").write(msg)
+                     messages.chat_message("user").write(msg)
                 elif role == "assistant":
                     messages.chat_message("assistant").write(msg)
             else:
                 st.warning("Formato de mensagem inválido na fila.")
-    
-
-    # on = st.toggle("Activate feature")
-
-
+        
 
 if __name__ == '__main__':
     main()
