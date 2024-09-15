@@ -88,4 +88,6 @@ def text_to_audio(text, lang='pt'):
     tts = gTTS(text=text, lang=lang)
     audio_fp = BytesIO()
     tts.write_to_fp(audio_fp)
+    audio_fp.seek(0)
     return audio_fp
+
