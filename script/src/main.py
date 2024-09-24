@@ -4,14 +4,17 @@ import time
 import streamlit as st
 import threading
 
+from queue import Queue
+from datetime import datetime
 from io import BytesIO
-import audio.process_audio as pa
-import process.gemini_api as api
 from util import interaction
 from collections import deque
+
 from dao import mongo_connect
 from process import question_similarity_and_message_analysis
 from audio import process_audio
+import audio.process_audio as pa
+import process.gemini_api as api
 
 def main():
     st.set_page_config(page_title='ChronosChat', page_icon=':assistant:')
@@ -19,6 +22,18 @@ def main():
 
     isPrimary_question = True
     messages = st.container()
+
+     # Inicializar estados
+    if "is_recording" not in st.session_state:
+        st.session_state.is_recording = {"status": False}
+    if "frames" not in st.session_state:
+        st.session_state.frames = []
+    if "audio_thread" not in st.session_state:
+        st.session_state.audio_thread = None
+    if "recognized_text" not in st.session_state:
+        st.session_state.recognized_text = ""
+    if "isconverter_texto_audio" not in st.session_state:
+        st.session_state.isconverter_texto_audio = False
 
     # Inicializar a fila de mensagens se ainda não existir
     if 'chatbot_responses' not in st.session_state:
@@ -29,66 +44,105 @@ def main():
     # Rastrear interações
     if 'interactions' not in st.session_state:
         st.session_state['interactions'] = []
-
     
     if isPrimary_question:
         messages.chat_message("assistant").write("Olá no que posso te ajudar hoje?")
     
     
     with st.sidebar:
-        on = st.toggle("Activate feature")
+        on = st.toggle("Ativar respostas em audio")
 
-    print(on)
+        if st.button("Iniciar Gravação"):
+                if not st.session_state.is_recording["status"]:
+                    st.session_state.is_recording = {"status": True}
+                    st.session_state.frames = []
+                    st.session_state.audio_thread = threading.Thread(target=process_audio.record_audio, args=(st.session_state.frames, st.session_state.is_recording))
+                    st.session_state.audio_thread.start()
+                    st.warning("Gravando áudio...")
+        
+        if st.button("Parar Gravação"):
+                with st.spinner("Gerando resposta..."):
+                    if st.session_state.is_recording["status"]:
+                        st.session_state.is_recording["status"] = False
+                        st.session_state.audio_thread.join()
+                        process_audio.save_audio(st.session_state.frames, "audio.wav")
+                        st.success("Áudio gravado e salvo como audio.wav")
+
+                        # Converter áudio em texto
+                        text = process_audio.audio_to_text("audio.wav")
+                        # st.session_state.recognized_text = text
+
+                        print("| SHOW AUDIO CONVERTIDO PARA TEXTO: ", text)
+
+                        # Atualizar pergunta do usuário com o texto reconhecido
+                        if text:
+                            st.session_state.user_question = text
+
+
+
+
+    
 
     # Entrada do usuário
-    if prompt := st.chat_input("Say something"):
+    if prompt := st.chat_input("Diga alguma coisa"):
         isPrimary_question = False
-         # Adicionar a pergunta do usuário à fila e exibir na tela
-        st.session_state.chatbot_responses.append(("user", prompt))
-        with st.spinner("Gerando resposta..."):
-            # Gerar a resposta do chatbot (substitua pela sua chamada real de API)
-            previous_data = mongo_connect.get_previous_questions()
-            # Separar as perguntas para comparação
-            previous_questions = [item['question'] for item in previous_data]
+        spinner_message = "Hummmm... Deixe-me pensar"
 
+        # Adiciona a pergunta do usuário à fila de interações e exibe
+        st.session_state.chatbot_responses.append({
+            "role": "user",
+            "content":[{
+                "type": "text",
+                "text": prompt,
+            }]
+        })
+
+        with st.spinner(spinner_message):
+            # Formatar a data e hora sem caracteres inválidos
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+            # Gerar a resposta do chatbot
+            previous_data = mongo_connect.get_previous_questions()
+            previous_questions = [item['question'] for item in previous_data]
             index, similarity = question_similarity_and_message_analysis.find_similar_question(prompt, previous_questions)
             if similarity > 0.8:
-                print("As perguntas foram similares...")
                 response = previous_data[index]['response']
-                interaction.log_interaction(prompt, response)
-                if on:
-                    audio = process_audio.text_to_audio(response)
-                    st.audio(audio, format="audio/wav")
-                    st.session_state.chatbot_responses.append(("assistant_audio", audio))
-                else:
-                    st.session_state.chatbot_responses.append(("assistant", response))
             else:
-                print("As perguntas não foram similares...")
                 response = api.send_input_gemini_api(prompt)
-                interaction.log_interaction(prompt, response)
-                if on:
-                    audio = process_audio.text_to_audio(response)
-                    st.audio(audio, format="audio/wav")
-                    st.session_state.chatbot_responses.append(("assistant_audio", audio))
-                else:
-                    st.session_state.chatbot_responses.append(("assistant", response))
-        
-         # Exibir todas as interações na tela, em ordem
-        for message in st.session_state.chatbot_responses:
-            # Verifique se cada item é uma tupla com dois elementos
-            if isinstance(message, tuple) and len(message) == 2:
-                role, msg = message
-                if role == "user":
-                     messages.chat_message("user").write(msg)
-                elif role == "assistant":
-                    messages.chat_message("assistant").write(msg)
-                elif role == "assistant_audio":
-                    # Garante que 'message' seja um objeto BytesIO e não uma tupla
-                    if isinstance(message, BytesIO):
-                        st.audio(message, format="audio/wav") 
+
+            interaction.log_interaction(prompt, response)
+            # Checa se a conversão para áudio está ativada
+            if on:
+                audio_path = f"script\\output\\audio_output_{st.session_state['user_id']}_{timestamp}.wav"
+                audio = process_audio.text_to_audio(response, save_path=audio_path)
+                st.session_state.chatbot_responses.append({
+                    "role": "assistant",
+                    "content":[{
+                        "type": "audio_file",
+                        "audio_file": audio_path,
+                    }]
+                })
+
             else:
-                st.warning("Formato de mensagem inválido na fila.")
-        
+                # Adiciona a resposta do assistente em texto à fila
+                st.session_state.chatbot_responses.append({
+                    "role": "assistant",
+                    "content":[{
+                        "type": "text",
+                        "text": response,
+                    }]
+                })
+
+     # Exibir todas as interações na tela, em pares de pergunta e resposta
+    for message in st.session_state.chatbot_responses:
+        with st.chat_message(message["role"]):
+            for content in message["content"]:
+                if content["type"] == "text":
+                    st.write(content["text"])
+                elif content["type"] == "audio_file":
+                    st.audio(content["audio_file"])
+
+   
 
 if __name__ == '__main__':
     main()

@@ -6,24 +6,13 @@ from model import interaction_entity
 
 # Função para registrar interações
 def log_interaction(user_question, bot_response):
-    print('-- SHOW LOG INTERACTION --')
-    interaction_time = datetime.now()
-    # st.session_state['interactions'].append({
-    #     'timestamp': interaction_time,
-    #     'user_id': st.session_state['user_id'],
-    #     'user_question': user_question,
-    #     'bot_response': bot_response
-    # })
-
     # Crie uma instância da classe Interaction
-    
     new_interaction = interaction_entity.Interaction(
         timestamp=get_time_spent(),
         user_id=st.session_state['user_id'],
         user_question=user_question,
         bot_response=bot_response
     )
-
     mongo_db.insert_bd(new_interaction)
 
     
