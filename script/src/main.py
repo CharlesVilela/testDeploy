@@ -9,6 +9,7 @@ from datetime import datetime
 from io import BytesIO
 from util import interaction
 from collections import deque
+from audio_recorder_streamlit import audio_recorder
 
 from dao import mongo_connect
 from process import question_similarity_and_message_analysis
@@ -48,43 +49,29 @@ def main():
     if isPrimary_question:
         messages.chat_message("assistant").write("Olá no que posso te ajudar hoje?")
     
-    
+    audio_transcript = ""
     with st.sidebar:
         on = st.toggle("Ativar respostas em audio")
 
-        if st.button("Iniciar Gravação"):
-                if not st.session_state.is_recording["status"]:
-                    st.session_state.is_recording = {"status": True}
-                    st.session_state.frames = []
-                    st.session_state.audio_thread = threading.Thread(target=process_audio.record_audio, args=(st.session_state.frames, st.session_state.is_recording))
-                    st.session_state.audio_thread.start()
-                    st.warning("Gravando áudio...")
-        
-        if st.button("Parar Gravação"):
-                with st.spinner("Gerando resposta..."):
-                    if st.session_state.is_recording["status"]:
-                        st.session_state.is_recording["status"] = False
-                        st.session_state.audio_thread.join()
-                        process_audio.save_audio(st.session_state.frames, "audio.wav")
-                        st.success("Áudio gravado e salvo como audio.wav")
+        if "prev_speech_hash" not in st.session_state:
+            st.session_state.prev_speech_hash = None
 
-                        # Converter áudio em texto
-                        text = process_audio.audio_to_text("audio.wav")
-                        # st.session_state.recognized_text = text
-
-                        print("| SHOW AUDIO CONVERTIDO PARA TEXTO: ", text)
-
-                        # Atualizar pergunta do usuário com o texto reconhecido
-                        if text:
-                            st.session_state.user_question = text
+        speech_input = audio_recorder(
+                                    "Precione para falar:", 
+                                    icon_size="3x", 
+                                    neutral_color="#6ca395", 
+                                    energy_threshold = ( - 1.0 ,  1.0 ), 
+                                    pause_threshold = 3.0 ,
+                                    )
+        if speech_input and st.session_state.prev_speech_hash != hash(speech_input):
+            st.session_state.prev_speech_hash = hash(speech_input)
+            process_audio.save_audio_file(speech_input, "audio.wav")
+            audio_transcript = process_audio.audio_to_text("audio.wav")
 
 
-
-
-    
 
     # Entrada do usuário
-    if prompt := st.chat_input("Diga alguma coisa"):
+    if (prompt := st.chat_input("Diga alguma coisa")) or (prompt := audio_transcript):
         isPrimary_question = False
         spinner_message = "Hummmm... Deixe-me pensar"
 

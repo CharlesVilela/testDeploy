@@ -59,9 +59,9 @@ def save_audio(frames, filename):
         wf.writeframes(audio_data.tobytes())
 
 
-
-import sounddevice as sd
-import numpy as np
+def save_audio_file(speench_input, filename="audio.wav"):
+    with open(filename, "wb") as f:
+        f.write(speench_input)
 
 def record_audio(filename, duration=10, device=None, channels=1, samplerate=44100):
     """
@@ -101,9 +101,6 @@ def record_audio(filename, duration=10, device=None, channels=1, samplerate=4410
 
     except Exception as e:
         print(f'Erro durante a gravação: {e}')
-
-
-
 
 
 # Função para converter áudio em texto

@@ -46,10 +46,18 @@ def get_all():
     history = []
     for doc in resultado:
         user_input = doc.get("userquestion", "")
-        history.append({
-            "role": "user",
-            "parts": [user_input]
-        })
+        assitant_response = doc.get("botresponse", "")
+        
+        if user_input:
+            history.append({
+                "role": "user",
+                "parts": [user_input]
+            })
+        if assitant_response:
+            history.append({
+                "role": "assistant",
+                "parts": [assitant_response]
+            })
     return history
 
 # def get_previous_questions():
