@@ -15,6 +15,7 @@ def log_interaction(user_question, bot_response, isQuestionAudio, isResponseAudi
         isQuestionAudio=isQuestionAudio,
         isResponseAudio=isResponseAudio
     )
+    print(new_interaction)
     mongo_db.insert_bd(new_interaction)
 
     

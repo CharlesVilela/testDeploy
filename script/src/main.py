@@ -23,6 +23,7 @@ def main():
 
     isPrimary_question = True
     messages = st.container()
+    isQuestionAudio = False
 
      # Inicializar estados
     if "is_recording" not in st.session_state:
@@ -49,7 +50,6 @@ def main():
     if isPrimary_question:
         messages.chat_message("assistant").write("Olá no que posso te ajudar hoje?")
     
-    isQuestionAudio = False
     
     audio_transcript = ""
     with st.sidebar:
@@ -124,7 +124,7 @@ def main():
                         "text": response,
                     }]
                 })
-            
+
             interaction.log_interaction(prompt, response, isQuestionAudio, isResponseAudio)
 
      # Exibir todas as interações na tela, em pares de pergunta e resposta
