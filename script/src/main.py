@@ -49,6 +49,8 @@ def main():
     if isPrimary_question:
         messages.chat_message("assistant").write("Olá no que posso te ajudar hoje?")
     
+    isQuestionAudio = False
+    
     audio_transcript = ""
     with st.sidebar:
         on = st.toggle("Ativar respostas em audio")
@@ -67,6 +69,7 @@ def main():
             st.session_state.prev_speech_hash = hash(speech_input)
             process_audio.save_audio_file(speech_input, "audio.wav")
             audio_transcript = process_audio.audio_to_text("audio.wav")
+            isQuestionAudio = True
 
 
 
@@ -88,6 +91,7 @@ def main():
             # Formatar a data e hora sem caracteres inválidos
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+            isResponseAudio = False
             # Gerar a resposta do chatbot
             previous_data = mongo_connect.get_previous_questions()
             previous_questions = [item['question'] for item in previous_data]
@@ -97,7 +101,6 @@ def main():
             else:
                 response = api.send_input_gemini_api(prompt)
 
-            interaction.log_interaction(prompt, response)
             # Checa se a conversão para áudio está ativada
             if on:
                 audio_path = f"script\\output\\audio_output_{st.session_state['user_id']}_{timestamp}.wav"
@@ -110,6 +113,8 @@ def main():
                     }]
                 })
 
+                isResponseAudio = True
+
             else:
                 # Adiciona a resposta do assistente em texto à fila
                 st.session_state.chatbot_responses.append({
@@ -119,6 +124,8 @@ def main():
                         "text": response,
                     }]
                 })
+            
+            interaction.log_interaction(prompt, response, isQuestionAudio, isResponseAudio)
 
      # Exibir todas as interações na tela, em pares de pergunta e resposta
     for message in st.session_state.chatbot_responses:

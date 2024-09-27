@@ -24,7 +24,9 @@ def insert_bd(new_interaction):
              "botresponse": new_interaction.bot_response, 
              "userid": new_interaction.user_id, 
              "timeresponse": new_interaction.timestamp,
-             "datetime": datetime.now()}
+             "datetime": datetime.now(),
+             "isQuestionAudio": new_interaction.isQuestionAudio,
+             "isResponseAudio": new_interaction.isResponseAudio}
     try:
         result = collection.insert_one(data)
     except errors.ServerSelectionTimeoutError as e:
