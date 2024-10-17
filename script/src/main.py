@@ -53,18 +53,20 @@ def main():
     
     audio_transcript = ""
     with st.sidebar:
-        on = st.toggle("Ativar respostas em audio")
+        # on = st.toggle("Ativar respostas em audio")
+        on = False
 
         if "prev_speech_hash" not in st.session_state:
             st.session_state.prev_speech_hash = None
 
-        speech_input = audio_recorder(
-                                    "Precione para falar:", 
-                                    icon_size="3x", 
-                                    neutral_color="#6ca395", 
-                                    energy_threshold = ( - 1.0 ,  1.0 ), 
-                                    pause_threshold = 3.0 ,
-                                    )
+        # speech_input = audio_recorder(
+        #                             "Precione para falar:", 
+        #                             icon_size="3x", 
+        #                             neutral_color="#6ca395", 
+        #                             energy_threshold = ( - 1.0 ,  1.0 ), 
+        #                             pause_threshold = 3.0 ,
+        #                             )
+        speech_input = None
         if speech_input and st.session_state.prev_speech_hash != hash(speech_input):
             st.session_state.prev_speech_hash = hash(speech_input)
             process_audio.save_audio_file(speech_input, "audio.wav")
