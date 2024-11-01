@@ -110,3 +110,29 @@ def get_history():
             "parts": [user_input]
         })
     return history
+
+
+def get_biography(user_input):
+    # Realizar uma pesquisa de texto com base nas palavras-chave do user_input
+    try:
+        db = connected_bd()
+        collection = db["biography"]
+        keywords = user_input.split()
+        results = collection.find(
+                {"keywords": {"$in": keywords}},  # Verifica se alguma palavra-chave está no array 'keywords'
+                {"text": 1, "_id": 0}  # Apenas retorna o campo 'text' (o conteúdo da biografia)
+        )
+        biography_texts = " ".join([result["text"] for result in results])
+
+        for result in results:
+            print(result["text"])
+
+        # Retorna os textos encontrados como uma lista
+        print('| SHOW USER INPUT ', user_input)
+        print('| SHOW KEYWORDS ', keywords)
+        print('| SHOW FIND BIOGRAPHY ', biography_texts)
+        return biography_texts if biography_texts else None
+        
+    except Exception as e:
+        print(f"Erro ao buscar biografias: {e}")
+        return []

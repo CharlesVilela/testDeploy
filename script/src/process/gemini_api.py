@@ -39,6 +39,7 @@ def configure_gemini_api():
     ]
 
     model = genai.GenerativeModel(
+        # model_name="gemini-1.5-flash",
         model_name="gemini-1.5-flash",
         generation_config=generation_config,
         safety_settings = safety_settings,
@@ -53,16 +54,23 @@ def send_input_gemini_api(user_input):
     
     model = configure_gemini_api()
     # Carregar o histórico da conversa do banco de dados
-    history = mongo_db.get_all()
+    # history = mongo_db.get_all()
     # # Filtrar apenas as mensagens chave
     # key_messages = question.filter_key_messages(history)
 
     # Limitar o histórico às últimas 10 mensagens, por exemplo
-    max_history_length = 15
-    if len(history) > max_history_length:
-        history = history[-max_history_length:]
-
-    key_messages = history
+    # max_history_length = 15
+    # if len(history) > max_history_length:
+    #     history = history[-max_history_length:]
+    
+    # biography_text = mongo_db.get_biography(user_input)
+    # print()
+    # print('SHOW BIOGRAPHY CONTEXT ', biography_text)
+    # if biography_text:
+    #     # Insere a biografia como uma "mensagem do sistema" para dar contexto ao modelo
+    #     history.insert(0, {"role": "system", "parts": [biography_text]})
+    
+    # key_messages = history
     try:
         # Inicia a sessão de chat
         chat_session = model.start_chat()
@@ -73,6 +81,7 @@ def send_input_gemini_api(user_input):
         #         "parts": message["parts"]
         #     })
         # Envia a pergunta do usuário
+        print(user_input)
         response = chat_session.send_message({
             "role": "user",
             "parts": [user_input]

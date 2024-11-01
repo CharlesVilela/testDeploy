@@ -98,10 +98,13 @@ def main():
             previous_data = mongo_connect.get_previous_questions()
             previous_questions = [item['question'] for item in previous_data]
             index, similarity = question_similarity_and_message_analysis.find_similar_question(prompt, previous_questions)
-            if similarity > 0.8:
+            # if similarity > 0.8:
+            if False:
+                print('ENTROU NAS PERGUNTAS SIMILARES')
                 response = previous_data[index]['response']
             else:
                 response = api.send_input_gemini_api(prompt)
+                print(response)
 
             # Checa se a conversão para áudio está ativada
             if on:
@@ -124,19 +127,40 @@ def main():
                     "content":[{
                         "type": "text",
                         "text": response,
-                    }]
+                    }],
+                    "avatar": "C:\\Projetos\\chatbot5\\script\\image\\adamLovelace.jpeg"
                 })
 
             interaction.log_interaction(prompt, response, isQuestionAudio, isResponseAudio)
 
-     # Exibir todas as interações na tela, em pares de pergunta e resposta
+    #  # Exibir todas as interações na tela, em pares de pergunta e resposta
+    # for message in st.session_state.chatbot_responses:
+    #     with st.chat_message(message["role"]):
+    #         for content in message["content"]:
+    #             if message["role"] == "assistant":
+    #                 st.image(message["avatar"],width=50)
+    #             if content["type"] == "text":
+    #                 st.write(content["text"])
+    #             elif content["type"] == "audio_file":
+    #                 st.audio(content["audio_file"])
+    # Exibir todas as interações na tela, em pares de pergunta e resposta
     for message in st.session_state.chatbot_responses:
-        with st.chat_message(message["role"]):
+        if message["role"] == "assistant":
+            # Exibe a imagem do avatar no lugar do ícone padrão
+            # Altere o papel temporariamente para evitar o ícone
+            st.image(message["avatar"], width=50)  # Exibe o avatar do assistant
             for content in message["content"]:
-                if content["type"] == "text":
-                    st.write(content["text"])
-                elif content["type"] == "audio_file":
-                    st.audio(content["audio_file"])
+                    if content["type"] == "text":
+                        st.write(content["text"])
+                    elif content["type"] == "audio_file":
+                        st.audio(content["audio_file"])
+        else:
+            with st.chat_message(message["role"]):
+                for content in message["content"]:
+                    if content["type"] == "text":
+                        st.write(content["text"])
+                    elif content["type"] == "audio_file":
+                        st.audio(content["audio_file"])
 
    
 
