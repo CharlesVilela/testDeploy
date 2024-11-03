@@ -1,6 +1,7 @@
 from pymongo import MongoClient, errors, server_api
 import streamlit as st
 from datetime import datetime
+from process import question_similarity_and_message_analysis as qsma
 
 def connected_bd():
     uri = "mongodb+srv://charlesvilela:user@cluster0.ryzor.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -112,26 +113,24 @@ def get_history():
     return history
 
 
-def get_biography(user_input):
+def get_biography(keywords):
     # Realizar uma pesquisa de texto com base nas palavras-chave do user_input
     try:
         db = connected_bd()
-        collection = db["biography"]
-        keywords = user_input.split()
+        collection = db["biography"]        
+        # Consulta
         results = collection.find(
-                {"keywords": {"$in": keywords}},  # Verifica se alguma palavra-chave está no array 'keywords'
-                {"text": 1, "_id": 0}  # Apenas retorna o campo 'text' (o conteúdo da biografia)
+            {"keywords": {"$in": keywords}},
+            {"text": 1, "_id": 0}
         )
-        biography_texts = " ".join([result["text"] for result in results])
+        # Convertendo os resultados para uma lista
+        results_list = list(results)
 
-        for result in results:
-            print(result["text"])
+        # Imprimindo para depuração
+        print(f"Palavras-chave buscadas: {keywords}")
+        print(f"Número de resultados encontrados: {len(results_list)}")
 
-        # Retorna os textos encontrados como uma lista
-        print('| SHOW USER INPUT ', user_input)
-        print('| SHOW KEYWORDS ', keywords)
-        print('| SHOW FIND BIOGRAPHY ', biography_texts)
-        return biography_texts if biography_texts else None
+        return results_list
         
     except Exception as e:
         print(f"Erro ao buscar biografias: {e}")

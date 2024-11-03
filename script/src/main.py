@@ -1,5 +1,6 @@
 import re
 import uuid
+import os
 import time
 import streamlit as st
 import threading
@@ -46,6 +47,8 @@ def main():
     # Rastrear interações
     if 'interactions' not in st.session_state:
         st.session_state['interactions'] = []
+    if 'current_avatar' not in st.session_state:
+        st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "image", "default.jpeg")  # Avatar padrão
     
     if isPrimary_question:
         messages.chat_message("assistant").write("Olá no que posso te ajudar hoje?")
@@ -104,7 +107,7 @@ def main():
                 response = previous_data[index]['response']
             else:
                 response = api.send_input_gemini_api(prompt)
-                print(response)
+                
 
             # Checa se a conversão para áudio está ativada
             if on:
@@ -121,14 +124,28 @@ def main():
                 isResponseAudio = True
 
             else:
-                # Adiciona a resposta do assistente em texto à fila
+               
+                match = re.match(r"^ola\s+(.+)", prompt.strip(), re.IGNORECASE)
+                if match:
+                    character_name = match.group(1).lower().replace(" ", "")
+                    # avatar_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "image", f"{character_name}.jpeg")
+                    avatar_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", f"{character_name}.jpeg")
+                    print('| SHOW AVATAR PATH ', avatar_path)
+                    # Verifica se o avatar existe; se existir, atualiza o avatar atual
+                    print('| PATH EXISTS ', os.path.exists(avatar_path))
+                    # if os.path.exists(avatar_path):
+                    st.session_state['current_avatar'] = avatar_path
+                    # C:\Projetos\chatbot5\script\image\alanturing.jpeg
+                    # C:\Projetos\chatbot5\script\src\image\alanturing.jpeg
+                    print("| SHOW SESSION STATE CURRENT AVATAR ", st.session_state['current_avatar'])
+
                 st.session_state.chatbot_responses.append({
                     "role": "assistant",
                     "content":[{
                         "type": "text",
                         "text": response,
                     }],
-                    "avatar": "C:\\Projetos\\chatbot5\\script\\image\\adamLovelace.jpeg"
+                    "avatar": st.session_state['current_avatar']
                 })
 
             interaction.log_interaction(prompt, response, isQuestionAudio, isResponseAudio)
