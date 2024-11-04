@@ -79,7 +79,7 @@ def main():
 
 
     # Entrada do usuário
-    if (prompt := st.chat_input("Diga alguma coisa")) or (prompt := audio_transcript):
+    if (prompt := st.chat_input("Diga: Olá [NOME DA PERSONALIDADE]. Exemplo: Olá Ada Lovelace")) or (prompt := audio_transcript):
         isPrimary_question = False
         spinner_message = "Hummmm... Deixe-me pensar"
 
