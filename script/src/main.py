@@ -96,6 +96,10 @@ def main():
             # Formatar a data e hora sem caracteres inválidos
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+            print("| SHOW PROMPT ANTES DE REMOVER OS ACENTOS ", prompt)
+            prompt = interaction.accent_remover(prompt)
+            print("| SHOW PROMPT DEPOIS DE REMOVER OS ACENTOS ", prompt)
+
             isResponseAudio = False
             # Gerar a resposta do chatbot
             previous_data = mongo_connect.get_previous_questions()

@@ -4,6 +4,14 @@ from datetime import datetime
 from dao import mongo_connect as mongo_db
 from model import interaction_entity
 
+import unicodedata
+
+def accent_remover(text):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', text)
+        if unicodedata.category(c) != 'Mn'
+    )
+
 # Função para registrar interações
 def log_interaction(user_question, bot_response, isQuestionAudio, isResponseAudio):
     # Crie uma instância da classe Interaction
