@@ -61,6 +61,8 @@ def main():
          st.session_state['personality_name'] = None
     if 'random_personality' not in st.session_state:
         st.session_state['random_personality'] = []
+    if 'active_personality' not in st.session_state:
+        st.session_state['active_personality'] = None
     if isPrimary_question:
         messages.chat_message("assistant").write("✨ Bem-vindo(a) ao nosso Portal Temporal! ✨ Prepare-se para embarcar em conversas extraordinárias com as grandes figuras da história! Nossa máquina do tempo está pronta para conectar você com pensadores brilhantes, líderes audaciosos e mentes visionárias de eras passadas. 🌌")
     
@@ -110,7 +112,7 @@ def main():
             prompt = interaction.accent_remover(prompt)
 
             # match = re.search(r"\bOla\s+([A-Z][a-zA-Z]*\s+[A-Z][a-zA-Z]*)", prompt, re.IGNORECASE)
-            match = re.search(r"\b(?:Ola|Al|Ai|Oi)\s*([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)", prompt, re.IGNORECASE)
+            match = re.search(r"\b(?:Ola|Alo)\s*([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)", prompt, re.IGNORECASE)
             print("| SHOW MATCH ", match)
             if match:
                 character_name = match.group(1).strip()
@@ -129,6 +131,8 @@ def main():
                     print(f"Nome deduzido: {deduced_name} (max similaridade: {similarity:.2f}) (similaridade: {similarity:.2f})")
                     prompt = question_similarity_and_message_analysis.replace_in_prompt(prompt, character_name, deduced_name)
                     st.session_state['personality_exist'] = True
+                    st.session_state['active_personality'] = deduced_name
+
                     character_avatar_name = None
                     for personality in list_personality_and_image:
                         if personality["personality"].lower() == deduced_name:
@@ -149,7 +153,14 @@ def main():
                     print(f"Nenhuma correspondência suficientemente próxima foi encontrada. (similaridade: {similarity:.2f})")
                     st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", "default.jpeg")
                     st.session_state['personality_exist'] = False
-
+                    st.session_state['active_personality'] = None
+            # else:
+            #     # Usar a personalidade ativa se houver uma conversa em andamento
+            #     if st.session_state['active_personality']:
+            #         prompt = f"{st.session_state['active_personality']}: {prompt}"
+            #         st.session_state['personality_exist'] = True
+                # else:
+                #     st.session_state['personality_exist'] = False
             isResponseAudio = False
             # Gerar a resposta do chatbot
             previous_data = mongo_connect.get_previous_questions()
@@ -160,7 +171,8 @@ def main():
                 print('ENTROU NAS PERGUNTAS SIMILARES')
                 response = previous_data[index]['response']
             else:
-                print("| SHOW PROMPT QUE CHEGOU PARA ENVIAR PARA O GEMINI ", prompt)
+                print("| SHOW Personality exist QUE CHEGOU PARA ENVIAR PARA O GEMINI ", st.session_state['personality_exist'])
+
                 if st.session_state['personality_exist']:
                     response = api.send_input_gemini_api(prompt)
                 else:

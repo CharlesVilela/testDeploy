@@ -145,7 +145,8 @@ def get_character_info(user_input):
     # Verifica se a entrada inicia uma nova conversa com uma nova personalidade
     # match = re.match(r"^ola\s+(.+)", user_input.strip(), re.IGNORECASE)
     # match = re.search(r"\bOla\s+([A-Z][a-zA-Z]*\s+[A-Z][a-zA-Z]*)", user_input, re.IGNORECASE)
-    match = re.search(r"\b(?:Ola|Al|Ai|Oi)\s*([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)", user_input, re.IGNORECASE)
+    # match = re.search(r"\b(?:Ola|Al|Ai|Oi)\s*([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)", user_input, re.IGNORECASE)
+    match = re.search(r"\b(?:Ola|Alo)\s*([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)", user_input, re.IGNORECASE)
     if match:
         # character_name = match.group(1).lower()  # Extrai o nome do personagem em minúsculas
 
