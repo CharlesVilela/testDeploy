@@ -78,6 +78,8 @@ def get_previous_questions():
     # Retornar uma lista de dicionários com 'userquestion' e 'botresponse'
     return [{"question": doc['userquestion'], "response": doc['botresponse']} for doc in results]
 
+
+
 def insert_history(history):
     db = connected_bd()
     collection = db["history"]
@@ -135,3 +137,24 @@ def get_biography(keywords):
     except Exception as e:
         print(f"Erro ao buscar biografias: {e}")
         return []
+    
+
+def get_all_personalities():
+    try:
+        db = connected_bd()
+        collection = db["biography"]
+        
+        # Buscar tanto as perguntas quanto as respostas
+        personalities = collection.find({}, {"personality": 1,"image": 1, "_id": 0})
+
+        list_personality = [{"personality": p["personality"], "image": p.get("image", "")} for p in personalities]
+
+        print(f"Número de resultados encontrados: {len(list_personality)}")
+        print(f"Personalidades encontradas: {list_personality}")
+
+        return list_personality
+
+    except Exception as e:
+        print(f"Erro ao buscar biografias: {e}")
+        return []
+    

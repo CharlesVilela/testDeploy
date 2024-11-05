@@ -18,6 +18,10 @@ from audio import process_audio
 import audio.process_audio as pa
 import process.gemini_api as api
 
+# BIBLIOTECAS NOVAS INSTALADAS
+#  - fuzzywuzzy
+#  - python-Levenshtein
+
 def main():
     st.set_page_config(page_title='ChronosChat', page_icon=':assistant:')
     st.header("ChronoChat")
@@ -48,7 +52,8 @@ def main():
     if 'interactions' not in st.session_state:
         st.session_state['interactions'] = []
     if 'current_avatar' not in st.session_state:
-        st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "image", "default.jpeg")  # Avatar padrão
+        # st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "image", "default.jpeg") 
+        st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", "default.jpeg")
     
     if isPrimary_question:
         messages.chat_message("assistant").write("Olá no que posso te ajudar hoje?")
@@ -95,10 +100,43 @@ def main():
         with st.spinner(spinner_message):
             # Formatar a data e hora sem caracteres inválidos
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
-            print("| SHOW PROMPT ANTES DE REMOVER OS ACENTOS ", prompt)
+            prompt = re.sub(r"[^\w\sÀ-ÿ]", "", prompt)
             prompt = interaction.accent_remover(prompt)
-            print("| SHOW PROMPT DEPOIS DE REMOVER OS ACENTOS ", prompt)
+
+            # match = re.search(r"\bOla\s+([A-Z][a-zA-Z]*\s+[A-Z][a-zA-Z]*)", prompt, re.IGNORECASE)
+            match = re.search(r"\b(?:Ola|Al|Ai|Oi)\s*([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)", prompt, re.IGNORECASE)
+            print("| SHOW MATCH ", match)
+            if match:
+                character_name = match.group(1).strip()
+                print("| SHOW CHARACTER NAME BY SIMILAR PERSONALITIES ", character_name)
+
+                list_personality_and_image = mongo_connect.get_all_personalities()
+                list_only_personality = [p['personality'] for p in list_personality_and_image]
+                
+                deduced_name, similarity = question_similarity_and_message_analysis.find_most_similar_personality(character_name, list_only_personality)
+                
+                if similarity > 70:
+                    print(f"Nome deduzido: {deduced_name} (max similaridade: {similarity:.2f}) (similaridade: {similarity:.2f})")
+                    prompt = question_similarity_and_message_analysis.replace_in_prompt(prompt, character_name, deduced_name)
+                    character_avatar_name = None
+                    for personality in list_personality_and_image:
+                        if personality["personality"].lower() == deduced_name:
+                            character_avatar_name = personality["image"]
+
+
+                    avatar_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", f"{character_avatar_name}")
+                    # Verifica se o avatar existe; se existir, atualiza o avatar atual
+                    print('| PATH EXISTS ', os.path.exists(avatar_path))
+                    if os.path.exists(avatar_path):
+                        st.session_state['current_avatar'] = avatar_path
+                        print(f'Avatar atualizado para: {character_name}')
+                    else:
+                        st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", "default.jpeg")
+                        print(f'Avatar não encontrado para: {character_name}')
+
+                else:
+                    print(f"Nenhuma correspondência suficientemente próxima foi encontrada. (similaridade: {similarity:.2f})")
+                    st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", "default.jpeg")
 
             isResponseAudio = False
             # Gerar a resposta do chatbot
@@ -110,6 +148,7 @@ def main():
                 print('ENTROU NAS PERGUNTAS SIMILARES')
                 response = previous_data[index]['response']
             else:
+                print("| SHOW PROMPT QUE CHEGOU PARA ENVIAR PARA O GEMINI ", prompt)
                 response = api.send_input_gemini_api(prompt)
                 
 
@@ -129,19 +168,23 @@ def main():
 
             else:
                
-                match = re.match(r"^ola\s+(.+)", prompt.strip(), re.IGNORECASE)
-                if match:
-                    character_name = match.group(1).lower().replace(" ", "")
-                    # avatar_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "image", f"{character_name}.jpeg")
-                    avatar_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", f"{character_name}.jpeg")
-                    print('| SHOW AVATAR PATH ', avatar_path)
-                    # Verifica se o avatar existe; se existir, atualiza o avatar atual
-                    print('| PATH EXISTS ', os.path.exists(avatar_path))
-                    # if os.path.exists(avatar_path):
-                    st.session_state['current_avatar'] = avatar_path
-                    # C:\Projetos\chatbot5\script\image\alanturing.jpeg
-                    # C:\Projetos\chatbot5\script\src\image\alanturing.jpeg
-                    print("| SHOW SESSION STATE CURRENT AVATAR ", st.session_state['current_avatar'])
+                # match = re.match(r"^ola\s+(.+)", prompt.strip(), re.IGNORECASE)
+                # match = re.search(r"(?i)\bola\s+([a-zA-Z\s]+)", prompt.strip())
+                # match = re.search(r"\bOla\s+([A-Z][a-zA-Z]*\s+[A-Z][a-zA-Z]*)", prompt, re.IGNORECASE)
+                # if match:
+                #     character_name = match.group(1).strip()
+
+                #     # Salva o nome formatado (sem espaços) para construir o caminho do avatar
+                #     character_avatar_name = character_name.lower().replace(" ", "")
+                #     avatar_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", f"{character_avatar_name}.jpeg")
+                #     # Verifica se o avatar existe; se existir, atualiza o avatar atual
+                #     print('| PATH EXISTS ', os.path.exists(avatar_path))
+                #     if os.path.exists(avatar_path):
+                #         st.session_state['current_avatar'] = avatar_path
+                #         print(f'Avatar atualizado para: {character_name}')
+                #     else:
+                #         st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", "default.jpeg")
+                #         print(f'Avatar não encontrado para: {character_name}')
 
                 st.session_state.chatbot_responses.append({
                     "role": "assistant",
@@ -169,7 +212,10 @@ def main():
         if message["role"] == "assistant":
             # Exibe a imagem do avatar no lugar do ícone padrão
             # Altere o papel temporariamente para evitar o ícone
-            st.image(message["avatar"], width=50)  # Exibe o avatar do assistant
+            if message.get("avatar"):
+                st.image(message["avatar"], width=50)
+            else:
+                st.chat_message(message["role"])
             for content in message["content"]:
                     if content["type"] == "text":
                         st.write(content["text"])

@@ -143,9 +143,17 @@ def get_character_info(user_input):
     global current_character  # Declara que vamos manipular a variável global
 
     # Verifica se a entrada inicia uma nova conversa com uma nova personalidade
-    match = re.match(r"^ola\s+(.+)", user_input.strip(), re.IGNORECASE)
+    # match = re.match(r"^ola\s+(.+)", user_input.strip(), re.IGNORECASE)
+    # match = re.search(r"\bOla\s+([A-Z][a-zA-Z]*\s+[A-Z][a-zA-Z]*)", user_input, re.IGNORECASE)
+    match = re.search(r"\b(?:Ola|Al|Ai|Oi)\s*([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)?)", user_input, re.IGNORECASE)
     if match:
-        character_name = match.group(1).lower()  # Extrai o nome do personagem em minúsculas
+        # character_name = match.group(1).lower()  # Extrai o nome do personagem em minúsculas
+
+        character_name = match.group(1).strip().lower()
+
+        # Salva o nome formatado (sem espaços) para construir o caminho do avatar
+        # character_name = character_name.lower().replace(" ", "")
+        print(f'Nome da personalidade identificada em GET CHARACTER: {character_name}')
 
         # Atualiza a personalidade atual se for uma nova conversa com outro personagem
         if current_character != character_name:
@@ -186,7 +194,19 @@ def get_character_info(user_input):
     else:
         print("Formato de saudação inválido ou nenhuma personalidade foi iniciada.")
         return []
+
+
+
+# def encontrar_personalidade_aproximada(input_text):
+#     # Usa fuzzy matching para encontrar o nome mais parecido na lista
+#     nome_deducido, similaridade = process.extractOne(input_text, personalidades)
     
+#     # Define um limite de similaridade para considerar uma correspondência válida
+#     if similaridade >= 80:  # Ajuste conforme necessário
+#         return nome_deducido
+#     return None
+
+
 # def create_pdf(biography_text, filename='biography.pdf'):
 #     try:
 #         c = canvas.Canvas(filename, pagesize=letter)
