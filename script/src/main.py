@@ -4,6 +4,7 @@ import os
 import time
 import streamlit as st
 import threading
+import random
 
 from queue import Queue
 from datetime import datetime
@@ -54,9 +55,14 @@ def main():
     if 'current_avatar' not in st.session_state:
         # st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "image", "default.jpeg") 
         st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", "default.jpeg")
-    
+    if 'personality_exist' not in st.session_state:
+        st.session_state['personality_exist'] = False
+    if 'personality_name' not in st.session_state:
+         st.session_state['personality_name'] = None
+    if 'random_personality' not in st.session_state:
+        st.session_state['random_personality'] = []
     if isPrimary_question:
-        messages.chat_message("assistant").write("Olá no que posso te ajudar hoje?")
+        messages.chat_message("assistant").write("✨ Bem-vindo(a) ao nosso Portal Temporal! ✨ Prepare-se para embarcar em conversas extraordinárias com as grandes figuras da história! Nossa máquina do tempo está pronta para conectar você com pensadores brilhantes, líderes audaciosos e mentes visionárias de eras passadas. 🌌")
     
     
     audio_transcript = ""
@@ -110,14 +116,19 @@ def main():
                 character_name = match.group(1).strip()
                 print("| SHOW CHARACTER NAME BY SIMILAR PERSONALITIES ", character_name)
 
+                st.session_state['personality_name'] = character_name
                 list_personality_and_image = mongo_connect.get_all_personalities()
                 list_only_personality = [p['personality'] for p in list_personality_and_image]
+
+                st.session_state['random_personality'] = random.sample(list_only_personality, min(4, len(list_only_personality)))
+
                 
                 deduced_name, similarity = question_similarity_and_message_analysis.find_most_similar_personality(character_name, list_only_personality)
                 
                 if similarity > 70:
                     print(f"Nome deduzido: {deduced_name} (max similaridade: {similarity:.2f}) (similaridade: {similarity:.2f})")
                     prompt = question_similarity_and_message_analysis.replace_in_prompt(prompt, character_name, deduced_name)
+                    st.session_state['personality_exist'] = True
                     character_avatar_name = None
                     for personality in list_personality_and_image:
                         if personality["personality"].lower() == deduced_name:
@@ -137,6 +148,7 @@ def main():
                 else:
                     print(f"Nenhuma correspondência suficientemente próxima foi encontrada. (similaridade: {similarity:.2f})")
                     st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", "default.jpeg")
+                    st.session_state['personality_exist'] = False
 
             isResponseAudio = False
             # Gerar a resposta do chatbot
@@ -149,7 +161,10 @@ def main():
                 response = previous_data[index]['response']
             else:
                 print("| SHOW PROMPT QUE CHEGOU PARA ENVIAR PARA O GEMINI ", prompt)
-                response = api.send_input_gemini_api(prompt)
+                if st.session_state['personality_exist']:
+                    response = api.send_input_gemini_api(prompt)
+                else:
+                    response = f"Parece que nossa máquina do tempo ainda não conseguiu calibrar as coordenadas para visitar {st.session_state['personality_name']}. Estamos trabalhando para ajustar nossos mecanismos e em breve esperamos tornar essa viagem possível! Enquanto isso, que tal explorar outras eras ou conversar com outra figura histórica? Como: {st.session_state['random_personality']}. Nossa linha do tempo tem muitos destinos fascinantes à sua espera!"
                 
 
             # Checa se a conversão para áudio está ativada
@@ -167,25 +182,6 @@ def main():
                 isResponseAudio = True
 
             else:
-               
-                # match = re.match(r"^ola\s+(.+)", prompt.strip(), re.IGNORECASE)
-                # match = re.search(r"(?i)\bola\s+([a-zA-Z\s]+)", prompt.strip())
-                # match = re.search(r"\bOla\s+([A-Z][a-zA-Z]*\s+[A-Z][a-zA-Z]*)", prompt, re.IGNORECASE)
-                # if match:
-                #     character_name = match.group(1).strip()
-
-                #     # Salva o nome formatado (sem espaços) para construir o caminho do avatar
-                #     character_avatar_name = character_name.lower().replace(" ", "")
-                #     avatar_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", f"{character_avatar_name}.jpeg")
-                #     # Verifica se o avatar existe; se existir, atualiza o avatar atual
-                #     print('| PATH EXISTS ', os.path.exists(avatar_path))
-                #     if os.path.exists(avatar_path):
-                #         st.session_state['current_avatar'] = avatar_path
-                #         print(f'Avatar atualizado para: {character_name}')
-                #     else:
-                #         st.session_state['current_avatar'] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "image", "default.jpeg")
-                #         print(f'Avatar não encontrado para: {character_name}')
-
                 st.session_state.chatbot_responses.append({
                     "role": "assistant",
                     "content":[{
